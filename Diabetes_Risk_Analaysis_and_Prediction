@@ -1,0 +1,147 @@
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.metrics import mean_squared_error, mean_absolute_error, accuracy_score
+
+File_Path = r"D:\Need_to_Concentrate\AI\ML_projects\Diabetes_Risk_Prediction\diabetes_risk.csv"
+df = pd.read_csv(File_Path)
+drp = df.drop(['patient_id', 'income_bracket'], axis=1)
+drp_safe = drp.copy()
+drp_c = drp_safe.copy()
+drp_c['waist_circumference_cm'] = (drp_c['waist_circumference_cm']/2.54).astype(float)
+#drp_c['smoking_status'] = drp['smoking_status'].fillna('blanks')
+
+#drp.groupby('smoking_status').value_counts().reset_index()
+#print("Sum: ", drp['smoking_status'].value_counts())
+#print("Sum: ", drp['alcohol_consumption'].value_counts())
+#print("Max: ", drp.groupby('smoking_status').value_counts().max())
+#print("Min: ", drp.groupby('smoking_status').value_counts().min())
+#print("mod: ", drp.groupby('smoking_status').value_counts(Never).sum())
+
+
+fig, (ax1,ax2,ax3) = plt.subplots(3,1,sharex=True)
+ax1.scatter(drp_c['diabetes_risk'], drp_c['hba1c_level'])
+ax2.scatter(drp_c['diabetes_risk'], drp_c['hba1c_level'])
+ax3.scatter(drp_c['diabetes_risk'], drp_c['hba1c_level'])
+ax1.set_ylim(6.5, 15)
+ax2.set_ylim(5.8, 6.4)
+ax3.set_ylim(4.8, 5.7)
+plt.xlabel('Risk')
+plt.ylabel('hba1c_level')
+plt.show()
+
+fig, (ax1,ax2,ax3) = plt.subplots(3,1,sharex=True)
+ax1.scatter(drp_c['diabetes_risk'], drp_c['fasting_blood_sugar'])
+ax2.scatter(drp_c['diabetes_risk'], drp_c['fasting_blood_sugar'])
+ax3.scatter(drp_c['diabetes_risk'], drp_c['fasting_blood_sugar'])
+ax1.set_ylim(126, 401)
+ax2.set_ylim(100, 126)
+ax3.set_ylim(72, 101)
+plt.xlabel('Risk')
+plt.ylabel('fasting_blood_sugar')
+plt.show()
+
+
+
+sns.scatterplot(drp_c, x='diabetes_risk', y= 'waist_circumference_cm', hue='diabetes_risk', palette='Set1')
+plt.show()
+drp_sa = drp_c.copy()
+drp_sa = drp_sa.drop(['city'], axis=1)
+drp_sa['waist_circumference_cm'] = drp_sa['waist_circumference_cm']/2.54
+drp_sa['gender'] = drp_sa['gender'].map({'Female':1, 'Male':2, 'Other':3})
+drp_sa['family_history_diabetes'] = drp_sa['family_history_diabetes'].map({'No':0, 'Yes':1})
+drp_sa['smoking_status'] = drp_sa['smoking_status'].fillna('blanks')
+drp_sa['alcohol_consumption']=drp_sa['alcohol_consumption'].fillna('blanks')
+drp_sa['alcohol_consumption'] = drp_sa['alcohol_consumption'].map({'Never':0, 'Occasional':1, 'Regular':2, 'blanks':3})
+drp_sa['smoking_status'] = drp_sa['smoking_status'].map({'Never':0, 'Former':1, 'Current':2, 'blanks':3})
+drp_sa['physical_activity_level'] = drp_sa['physical_activity_level'].map({'Sedentary':0, 'Moderate':1, 'Active':2})
+drp_sa['diet_type'] = drp_sa['diet_type'].map({'Vegan':0, 'Vegetarian':1, 'Non-Vegetarian':2, 'Pescatarian':3})
+drp_sa['diabetes_risk'] = drp_sa['diabetes_risk'].map({'Low':0, 'Moderate':1, 'High':2})
+
+
+
+#drp_smokes.reset_index()
+
+plt.figure(figsize=(14, 8))
+sns.heatmap(drp_sa.corr(), annot=True)
+plt.show()
+
+plt.figure(figsize=(14,8))
+plt.scatter(drp_sa['age'], drp_sa['smoking_status'])
+plt.xlabel('hba1c_level')
+plt.ylabel('smoking_status')
+plt.show()
+
+plt.figure(figsize=(14,8))
+plt.scatter(drp_sa['hba1c_level'], drp_sa['smoking_status'])
+plt.xlabel('hba1c_level')
+plt.ylabel('smoking_status')
+plt.show()
+
+plt.figure(figsize=(14, 8))
+plt.scatter(drp_sa['fasting_blood_sugar'], drp_sa['smoking_status'])
+plt.xlabel('fasting_blood_sugar')
+plt.ylabel('smoking_status')
+plt.show()
+
+plt.figure(figsize=(14,8))
+plt.scatter(drp_sa['hba1c_level'], drp_sa['alcohol_consumption'])
+plt.xlabel('hba1c_level')
+plt.ylabel('alcohol_consumption')
+plt.show()
+
+plt.figure(figsize=(14, 8))
+plt.scatter(drp_sa['fasting_blood_sugar'], drp_sa['alcohol_consumption'])
+plt.xlabel('fasting_blood_sugar')
+plt.ylabel('alcohol_consumption')
+plt.show()
+
+#drp_sa['fasting_blood_sugar'] = (drp_sa['fasting_blood_sugar']/2.54) * (1.0)
+
+print(drp_c['fasting_blood_sugar'].between(70,101).sum())
+print(drp_c['fasting_blood_sugar'].between(101,126).sum())
+print(drp_c['fasting_blood_sugar'].between(126,401).sum())
+
+# I need to know how many fbs b/w these diff ranges is fall in each category in Diabetes Risk
+print("fbs_low: ", drp_sa[drp_c['fasting_blood_sugar'].between(72, 100)].groupby('diabetes_risk').size())
+print("hba1c_low: ", drp_sa[drp_c['hba1c_level'].between(4.8, 5.7)].groupby('diabetes_risk').size())
+print("fbs_mid: ", drp_sa[drp_c['fasting_blood_sugar'].between(101, 125)].groupby('diabetes_risk').size())
+print("hba1c_mid: ", drp_sa[drp_c['hba1c_level'].between(5.8, 6.4)].groupby('diabetes_risk').size())
+print("fbs_high: ", drp_sa[drp_c['fasting_blood_sugar'].between(126, 400)].groupby('diabetes_risk').size())#value_counts())
+print("hba1c_high: ", drp_sa[drp_c['hba1c_level'].between(6.5, 15)].groupby('diabetes_risk').size())
+print("Physical: ", drp_sa[drp_c['hba1c_level'].between(6.5, 15)].groupby('physical_activity_level').size())
+
+
+
+sns.swarmplot(drp_sa, x='diabetes_risk', y= 'stress_level', hue='diabetes_risk', palette='Set1')
+plt.show()
+#print("stress: ", drp_sa[drp_c['hba1c_level'].between(6.5, 15)].groupby('stress_level').size())
+
+#features = drp_sa[['diet_type', 'hba1c_level', 'fasting_blood_sugar', 'physical_activity_level', 'bmi', 'waist_circumference_cm']]# 'alcohol_consumption', 'smoking_status'])
+features = drp_sa[['hba1c_level', 'fasting_blood_sugar']]# 'alcohol_consumption', 'smoking_status'])
+
+X = features
+Y = drp_sa['diabetes_risk']
+x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=52)
+
+models = []
+models.append(('DTC', DecisionTreeClassifier()))
+models.append(('Naive Bayes', GaussianNB()))
+models.append(('RFC', RandomForestClassifier()))
+models.append(('svm', SVC(kernel='linear')))
+models.append(('KNN', KNeighborsClassifier(n_neighbors=8)))
+
+for name, model in models:
+    model.fit(x_train, y_train)
+    ypred = model.predict(x_test)
+    print(name,"/n")
+    print("Mean_squared_error:", mean_squared_error(y_test,ypred))
+    print("Accuracy: ", accuracy_score(y_test,ypred))
